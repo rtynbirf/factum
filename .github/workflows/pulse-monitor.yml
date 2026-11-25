@@ -1,0 +1,52 @@
+name: pulse-monitor (ЭКГ)
+
+# Кто следит за сердцем? Этот монитор. Дважды в час меряет пульс, пишет свидетель
+# в PULSE_LOG.md при смене статуса (правило 23: каждый крон несёт свидетеля) и
+# реанимирует сердце при тихой смерти крона (правило 26: компенсация диспатчем).
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"   # кардиограмма дважды в час
+  workflow_dispatch: {}
+
+permissions:
+  contents: write            # pulse.json/svg + PULSE_LOG.md
+  actions: write             # дефибрилляция: gh workflow run factum-heartbeat
+
+concurrency:
+  group: pulse-monitor
+  cancel-in-progress: false
+
+jobs:
+  ecg:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: измерение пульса + свидетель при смене статуса
+        run: python3 pulse.py --monitor
+      - name: дефибрилляция, если сердце молчит сверх порога (правило 26)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NEED=$(python3 -c "import json; print(json.load(open('pulse.json'))['resuscitation_needed'])")
+          if [ "$NEED" = "True" ]; then
+            echo "ДЕФИБРИЛЛЯЦИЯ: тишина сверх 12.5 ч — запускаю factum-heartbeat"
+            gh workflow run factum-heartbeat.yml --repo rtynbirf/factum
+          else
+            echo "дефибрилляция не требуется (пульс в норме)"
+          fi
+      - name: зафиксировать показания ЭКГ
+        run: |
+          git config user.name "factum[bot]"
+          git config user.email "factum[bot]@users.noreply.github.com"
+          git add pulse.json pulse.svg PULSE_LOG.md
+          if git diff --cached --quiet; then
+            echo "no changes"
+          else
+            git commit -m "factum: пульс-ЭКГ $(date -u +%Y-%m-%dT%H:%M:%SZ) · REVE=РЕВО"
+            git push
+          fi
