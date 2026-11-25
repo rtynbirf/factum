@@ -1,0 +1,53 @@
+name: poet-coevolution
+
+# Коэволюция среды и формы (POET-стиль) — открытый пункт §9 MODEL.md.
+# Ночной прогон poet.py: линия POET (среда наследуется от архивной пары, мутирует
+# и продвигается по критерию «контур жив И минимально-нова») против КОНТРОЛЯ
+# (тот же бюджет, случайные среды без селектора новизны). Соты POET_LOG.md
+# пополняются строками (append-only, prev = sha256 предыдущей сырой строки,
+# якорь 'POET'); архив пар (среда, форма) живёт в poet_state.json и переживает
+# запуски. Имена шагов БЕЗ двоеточия с пробелом (шрам startup_failure);
+# push — rebase-цикл до 3 попыток (правило 4).
+
+on:
+  schedule:
+    - cron: "44 4 * * *"     # ночной прогон коэволюции
+  workflow_dispatch: {}      # ручной запуск (как дефибрилляция у сердца)
+
+permissions:
+  contents: write            # минимум прав: RECORD = коммит сот и архива
+
+concurrency:
+  group: poet
+  cancel-in-progress: false  # поколения не сбивают друг друга
+
+jobs:
+  poet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30      # ночной бюджет (~1 мин счёта, запас на медленный раннер)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: ночной прогон коэволюции (среда вместе с формой)
+        run: python3 poet.py
+      - name: целость сот (иммунитет)
+        run: python3 poet.py --verify
+      - name: записать соты и архив (правило 4 — push → при отказе rebase до 3 попыток)
+        run: |
+          git config user.name "factum[bot]"
+          git config user.email "factum[bot]@users.noreply.github.com"
+          git add POET_LOG.md poet_state.json
+          if git diff --cached --quiet; then
+            echo "no changes"
+          else
+            git commit -m "poet: коэволюция $(date -u +%Y-%m-%dT%H:%M:%SZ) · REVE=РЕВО"
+            ok=""
+            for i in 1 2 3; do
+              if git push origin HEAD:main; then ok=1; break; fi
+              git fetch origin main
+              git pull --rebase=merges origin main || git pull --rebase origin main
+            done
+            [ -n "$ok" ] || { echo "push не прошёл за 3 попытки (правило 4)"; exit 1; }
+          fi
