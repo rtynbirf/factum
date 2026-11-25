@@ -1,0 +1,33 @@
+name: factum-heartbeat
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"   # сердцебиение каждые 6 часов
+  workflow_dispatch: {}      # ручной удар
+
+permissions:
+  contents: write
+
+jobs:
+  heartbeat:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: удар сердца (SKI + BCI + CHEM)
+        run: python3 factum.py --heartbeat
+      - name: целость сот
+        run: python3 factum.py --verify
+      - name: записать факт
+        run: |
+          git config user.name "factum[bot]"
+          git config user.email "factum[bot]@users.noreply.github.com"
+          git add JOURNAL.md
+          if git diff --cached --quiet; then
+            echo "no changes"
+          else
+            git commit -m "factum: heartbeat $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git push
+          fi
