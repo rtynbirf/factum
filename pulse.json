@@ -7,29 +7,29 @@
   "method_version": "pulse/v1.0",
   "beat_interval_hours": 6,
   "stale_threshold_hours": 12,
-  "generated_at": "2026-11-25T17:55:31Z",
-  "value": 5.46,
+  "generated_at": "2026-11-25T18:03:04Z",
+  "value": 0.02,
   "status": "LIVE",
   "chain_ok": true,
-  "beats": 6,
+  "beats": 9,
   "worlds": {
     "SKI": {
-      "utc": "2026-11-25T12:27:56Z",
+      "utc": "2026-11-25T18:01:38Z",
       "F": "28",
       "verdict": "SILENT"
     },
     "BCI": {
-      "utc": "2026-11-25T12:27:56Z",
+      "utc": "2026-11-25T18:01:38Z",
       "F": "0",
       "verdict": "SILENT"
     },
     "CHEM": {
-      "utc": "2026-11-25T12:27:57Z",
+      "utc": "2026-11-25T18:01:39Z",
       "F": "14",
       "verdict": "FORM"
     }
   },
-  "detail": "цепь сшита: 6 строк",
-  "last_beat_utc": "2026-11-25T12:27:57Z",
+  "detail": "цепь сшита: 9 строк",
+  "last_beat_utc": "2026-11-25T18:01:39Z",
   "resuscitation_needed": false
 }
