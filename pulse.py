@@ -105,17 +105,20 @@ def measure():
         "generated_at": now.isoformat(timespec="seconds").replace("+00:00", "Z"),
     }
     if not cells:
-        base.update(value=None, status="SOURCE_UNAVAILABLE", chain_ok=chain_ok, beats=0,
+        base.update(value=None, status="SOURCE_UNAVAILABLE", chain_ok=chain_ok, measurements=0, beats=0,
                     worlds={}, detail=msg, resuscitation_needed=True)
         return base
     # колонки JOURNAL: 0:# 1:UTC 2:мир 3:seed 4:шаги 5:типы 6:F 7:F_str 8:доля 9:N1 10:N2 11:N3 12:вердикт 13:prev
     last_utc = max(parse_utc(c[1]) for c in cells)
     age_h = (now - last_utc).total_seconds() / 3600.0
     worlds = {}
+    counts = {}
     for c in cells:  # append-only → последняя строка мира и есть свежая
         worlds[c[2]] = {"utc": c[1], "F": c[6], "verdict": c[12]}
+        counts[c[2]] = counts.get(c[2], 0) + 1
     status = "LIVE" if age_h < STALE_HOURS else "STALE"
-    base.update(value=round(age_h, 2), status=status, chain_ok=chain_ok, beats=len(cells),
+    base.update(value=round(age_h, 2), status=status, chain_ok=chain_ok, measurements=len(cells),
+                beats=min(counts.values()),
                 worlds=worlds, detail=msg,
                 last_beat_utc=last_utc.isoformat(timespec="seconds").replace("+00:00", "Z"),
                 resuscitation_needed=(age_h >= RESUS_HOURS))
@@ -207,7 +210,7 @@ def main():
     if not (args.json or args.badge or args.monitor):
         w = ", ".join(f"{k}={v['verdict']}" for k, v in c.get("worlds", {}).items()) or "—"
         age = f"{c['value']} ч" if c.get("value") is not None else "—"
-        print(f"ПУЛЬС: {c['status']} · последний удар {age} назад · ударов {c.get("measurements", 0)} замеров · "
+        print(f"ПУЛЬС: {c['status']} · последний удар {age} назад · ударов {c.get('beats', 0)} (замеров {c.get('measurements', 0)}) · "
               f"соты {'✓' if c.get('chain_ok') else '✗'} · миры: {w}")
         print(f"свидетель: {c.get('detail', '')}")
     if args.strict and (c["status"] != "LIVE" or not c.get("chain_ok")):
