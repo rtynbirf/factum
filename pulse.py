@@ -207,7 +207,7 @@ def main():
     if not (args.json or args.badge or args.monitor):
         w = ", ".join(f"{k}={v['verdict']}" for k, v in c.get("worlds", {}).items()) or "—"
         age = f"{c['value']} ч" if c.get("value") is not None else "—"
-        print(f"ПУЛЬС: {c['status']} · последний удар {age} назад · ударов {c.get('beats', 0)} · "
+        print(f"ПУЛЬС: {c['status']} · последний удар {age} назад · ударов {c.get("measurements", 0)} замеров · "
               f"соты {'✓' if c.get('chain_ok') else '✗'} · миры: {w}")
         print(f"свидетель: {c.get('detail', '')}")
     if args.strict and (c["status"] != "LIVE" or not c.get("chain_ok")):
