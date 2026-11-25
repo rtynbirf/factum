@@ -25,7 +25,7 @@ jobs:
         run: python3 factum.py --heartbeat
       - name: целость сот (иммунитет)
         run: python3 factum.py --verify
-      - name: записать факт (RECORD · правило 4: push → при отказе rebase до 3 попыток)
+      - name: записать факт (RECORD · правило 4 — push → при отказе rebase до 3 попыток)
         run: |
           git config user.name "factum[bot]"
           git config user.email "factum[bot]@users.noreply.github.com"

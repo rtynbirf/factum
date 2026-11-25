@@ -39,7 +39,7 @@ jobs:
           else
             echo "дефибрилляция не требуется (пульс в норме)"
           fi
-      - name: зафиксировать показания ЭКГ (правило 4: push → rebase до 3 попыток)
+      - name: зафиксировать показания ЭКГ (правило 4 — push → rebase до 3 попыток)
         run: |
           git config user.name "factum[bot]"
           git config user.email "factum[bot]@users.noreply.github.com"
