@@ -39,7 +39,7 @@ jobs:
           else
             echo "дефибрилляция не требуется (пульс в норме)"
           fi
-      - name: зафиксировать показания ЭКГ
+      - name: зафиксировать показания ЭКГ (правило 4: push → rebase до 3 попыток)
         run: |
           git config user.name "factum[bot]"
           git config user.email "factum[bot]@users.noreply.github.com"
@@ -48,5 +48,11 @@ jobs:
             echo "no changes"
           else
             git commit -m "factum: пульс-ЭКГ $(date -u +%Y-%m-%dT%H:%M:%SZ) · REVE=РЕВО"
-            git push
+            ok=""
+            for i in 1 2 3; do
+              if git push origin HEAD:main; then ok=1; break; fi
+              git fetch origin main
+              git pull --rebase=merges origin main || git pull --rebase origin main
+            done
+            [ -n "$ok" ] || { echo "push не прошёл за 3 попытки (правило 4)"; exit 1; }
           fi
