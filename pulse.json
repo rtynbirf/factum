@@ -1,0 +1,35 @@
+{
+  "metric_id": "factum.pulse",
+  "unit": "hours_since_last_beat",
+  "definition": "возраст последней строки данных JOURNAL.md (UTC), часы",
+  "source": "JOURNAL.md (соты, append-only, sha256-цепочка)",
+  "scope": "rtynbirf/factum@main",
+  "method_version": "pulse/v1.0",
+  "beat_interval_hours": 6,
+  "stale_threshold_hours": 12,
+  "generated_at": "2026-11-25T17:55:31Z",
+  "value": 5.46,
+  "status": "LIVE",
+  "chain_ok": true,
+  "beats": 6,
+  "worlds": {
+    "SKI": {
+      "utc": "2026-11-25T12:27:56Z",
+      "F": "28",
+      "verdict": "SILENT"
+    },
+    "BCI": {
+      "utc": "2026-11-25T12:27:56Z",
+      "F": "0",
+      "verdict": "SILENT"
+    },
+    "CHEM": {
+      "utc": "2026-11-25T12:27:57Z",
+      "F": "14",
+      "verdict": "FORM"
+    }
+  },
+  "detail": "цепь сшита: 6 строк",
+  "last_beat_utc": "2026-11-25T12:27:57Z",
+  "resuscitation_needed": false
+}
