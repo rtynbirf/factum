@@ -20,3 +20,4 @@
 | 2 | 2026-11-27T13:27:33Z | Z-AI/witness/v1.0 | LIVE | 4.78 | 8 | ✓ | 84 | 16 | LIVE_WITNESSED | 7a6015c7d56d |
 | 3 | 2026-11-27T13:51:07Z | Z-AI/witness/v1.0 | LIVE | 5.17 | 8 | ✓ | 84 | 16 | LIVE_WITNESSED | b1bd872264b9 |
 | 4 | 2026-11-27T16:52:52Z | Z-AI/witness/v1.0 | LIVE | 8.2 | 8 | ✓ | 85 | 16 | LIVE_WITNESSED | 293011898574 |
+| 5 | 2026-11-27T17:05:30Z | Z-AI/witness/v1.0 | LIVE | 8.41 | 8 | ✓ | 85 | 16 | LIVE_WITNESSED | 1d585bd00a05 |
