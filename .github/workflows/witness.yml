@@ -34,6 +34,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: python3 witness.py --witness
+      - name: export JSON contract (with nemoy cross-attest fields)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 witness.py --json > witness_state.json
       - name: целость сот свидетеля (иммунитет)
         run: python3 witness.py --verify
       - name: целость сот сердца (свидетель не ломает то, что наблюдает)
@@ -42,7 +46,7 @@ jobs:
         run: |
           git config user.name "factum[bot]"
           git config user.email "factum[bot]@users.noreply.github.com"
-          git add WITNESS_LOG.md
+          git add WITNESS_LOG.md witness_state.json
           if git diff --cached --quiet; then
             echo "no changes"
           else
