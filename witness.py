@@ -184,6 +184,94 @@ def fetch_apiary(token=None, owner=OWNER):
     }
 
 
+# ---- источник 3: nemoy-svidetel WITNESS_LEDGER (bidirectional attestation, SCITT) ----
+
+NEMOY_REPO = "nemoy-svidetel"
+NEMOY_LEDGER_PATH = "WITNESS_LEDGER.jsonl"
+NEMOY_ANCHOR = "NEMOY-WITNESS"
+
+
+def fetch_nemoy_ledger(token=None, owner=OWNER):
+    """Fetch nemoy-svidetel/WITNESS_LEDGER.jsonl via Contents API.
+    Returns list of records or {'error': ...}.
+    """
+    token = token or os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    headers = {"Accept": "application/vnd.github+json"}
+    if token:
+        headers["Authorization"] = f"token {token}"
+    try:
+        url = f"https://api.github.com/repos/{owner}/{NEMOY_REPO}/contents/{NEMOY_LEDGER_PATH}"
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=15) as r:
+            data = json.loads(r.read().decode("utf-8"))
+        if data.get("encoding") != "base64":
+            return {"error": "unexpected encoding"}
+        import base64
+        content = base64.b64decode(data["content"]).decode("utf-8")
+        records = []
+        for line in content.split("\n"):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                records.append(json.loads(line))
+            except json.JSONDecodeError:
+                pass
+        return {"records": records, "ok": True}
+    except Exception as e:
+        return {"error": f"{type(e).__name__}: {e}"}
+
+
+def verify_nemoy_ledger(records):
+    """Verify sha256-chain of nemoy-svidetel WITNESS_LEDGER.
+    anchor = sha256('NEMOY-WITNESS')[:12].
+    prev_hash[i] = sha256(prev record canonical JSON)[:12].
+    Returns (ok, n, msg, last_record)."""
+    if not records:
+        return False, 0, "nemoy ledger empty", None
+    for i, r in enumerate(records):
+        expected = line_hash(NEMOY_ANCHOR) if i == 0 else line_hash(
+            json.dumps(records[i-1], ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        )
+        if r.get("prev_hash") != expected:
+            return False, i + 1, f"nemoy row {i+1}: prev_hash mismatch", None
+    return True, len(records), f"nemoy chain intact ({len(records)} records)", records[-1]
+
+
+def cross_attest_nemoy(token=None):
+    """Bidirectional attestation: factum witness verifies nemoy-svidetel ledger.
+    SCITT-inspired: receipt ≠ truth, but chain integrity is verifiable.
+
+    Returns dict with:
+      - nemoy_ledger_ok: bool (chain intact)
+      - nemoy_ledger_records: int
+      - nemoy_ledger_last_seq: int or None
+      - nemoy_ledger_last_type: str or None
+      - nemoy_ledger_last_ts: str or None
+      - nemoy_ledger_error: str or None
+    """
+    fetched = fetch_nemoy_ledger(token)
+    if not fetched.get("ok"):
+        return {
+            "nemoy_ledger_ok": False,
+            "nemoy_ledger_records": 0,
+            "nemoy_ledger_last_seq": None,
+            "nemoy_ledger_last_type": None,
+            "nemoy_ledger_last_ts": None,
+            "nemoy_ledger_error": fetched.get("error", "unknown"),
+        }
+    records = fetched["records"]
+    ok, n, msg, last = verify_nemoy_ledger(records)
+    return {
+        "nemoy_ledger_ok": ok,
+        "nemoy_ledger_records": n,
+        "nemoy_ledger_last_seq": last.get("seq") if last else None,
+        "nemoy_ledger_last_type": last.get("result_type") if last else None,
+        "nemoy_ledger_last_ts": last.get("timestamp") if last else None,
+        "nemoy_ledger_error": None if ok else msg,
+    }
+
+
 # ---- измерение ----
 
 def measure(token=None):
@@ -196,6 +284,7 @@ def measure(token=None):
     apiary = fetch_apiary(token)
     apiary_ok = bool(apiary.get("ok"))
     chain_w_ok, chain_w_msg = verify_witness_chain()
+    nemoy = cross_attest_nemoy(token)
 
     if not chain_ok_j:
         verdict = "BROKEN_WITNESSED"
@@ -209,9 +298,9 @@ def measure(token=None):
     return {
         "metric_id": "factum.witness",
         "unit": "witness_observation",
-        "definition": "независимое свидетельство пульса ФАКТУМА и диспозиции пасеки rtynbirf",
-        "source": "JOURNAL.md + WITNESS_LOG.md + GitHub API /users/rtynbirf/repos",
-        "scope": f"{OWNER}/factum@main + {OWNER} apiary",
+        "definition": "независимое свидетельство пульса ФАКТУМА, диспозиции пасеки rtynbirf и cross-attestation nemoy-svidetel ledger",
+        "source": "JOURNAL.md + WITNESS_LOG.md + GitHub API /users/rtynbirf/repos + nemoy-svidetel/WITNESS_LEDGER.jsonl",
+        "scope": f"{OWNER}/factum@main + {OWNER} apiary + {OWNER}/nemoy-svidetel",
         "method_version": METHOD_VERSION,
         "generated_at": now,
         "pulse_status": pulse_status,
@@ -228,6 +317,13 @@ def measure(token=None):
         "witness_chain_ok": chain_w_ok,
         "witness_rows": 0 if chain_w_ok is False and "пусты" in chain_w_msg else read_rows(WITNESS_LOG)[0].__len__(),
         "witness_detail": chain_w_msg,
+        # Bidirectional attestation (SCITT): factum verifies nemoy-svidetel ledger
+        "nemoy_ledger_ok": nemoy["nemoy_ledger_ok"],
+        "nemoy_ledger_records": nemoy["nemoy_ledger_records"],
+        "nemoy_ledger_last_seq": nemoy["nemoy_ledger_last_seq"],
+        "nemoy_ledger_last_type": nemoy["nemoy_ledger_last_type"],
+        "nemoy_ledger_last_ts": nemoy["nemoy_ledger_last_ts"],
+        "nemoy_ledger_error": nemoy["nemoy_ledger_error"],
         "status": verdict,
     }
 
@@ -313,11 +409,22 @@ def main():
         age = f"{c['pulse_age_hours']} ч" if c["pulse_age_hours"] is not None else "—"
         apiary = c["apiary_repos_total"] if c["apiary_ok"] else f"ошибка: {c['apiary_error']}"
         fat = c["apiary_fat_repos"] if c["apiary_ok"] else "—"
+        nemoy_ok = c.get("nemoy_ledger_ok")
+        nemoy_n = c.get("nemoy_ledger_records", 0)
+        nemoy_seq = c.get("nemoy_ledger_last_seq")
+        nemoy_err = c.get("nemoy_ledger_error")
         print(f"СВИДЕТЕЛЬ: {c['status']} · {LABELS[c['status']]}")
         print(f"  пульс: {c['pulse_status']} · последний удар {age} назад · ударов {c['journal_beats']} · "
               f"соты {'✓' if c['journal_chain_ok'] else '✗'} ({c['journal_rows']} строк)")
         print(f"  пасека: {apiary} репозиториев · ЖИР {fat} (>10 MiB)")
         print(f"  соты свидетеля: {'✓' if c['witness_chain_ok'] else '✗'} ({c['witness_detail']})")
+        # Bidirectional attestation (SCITT)
+        if nemoy_ok is True:
+            print(f"  cross-attest nemoy-svidetel: ✓ chain intact ({nemoy_n} records, last seq={nemoy_seq})")
+        elif nemoy_ok is False:
+            print(f"  cross-attest nemoy-svidetel: ✗ {nemoy_err or 'verification failed'}")
+        else:
+            print(f"  cross-attest nemoy-svidetel: — {nemoy_err or 'not checked'}")
         if args.strict and (not c["witness_chain_ok"] or c["status"] in ("UNAVAILABLE", "BROKEN_WITNESSED")):
             sys.exit(1)
 
