@@ -1,0 +1,57 @@
+name: witness (свидетель ФАКТУМА)
+
+# Кто следит за тем, кто следит за сердцем? Этот свидетель (правило 23 — рекурсивно).
+# Раз в день + по диспатчу: читает JOURNAL.md (соты сердца), меряет диспозицию
+# пасеки rtynbirf (репозитории через GitHub API), записывает факт-свидетельство
+# в WITNESS_LOG.md (соты того же протокола, якорь 'WITNESS').
+#
+# Свидетель не лечит — свидетель фиксирует. Пропуск смены диспозиции пасеки
+# (новые/исчезнувшие репозитории, рост ЖИР-репозиториев) ловится строкой.
+# Тихая смерть крона (правило 26) ловится вердиктом STALE_WITNESSED.
+
+on:
+  schedule:
+    - cron: "7 3 * * *"        # ежедневно в 03:07 UTC — независимый замер
+  workflow_dispatch: {}        # ручной замер свидетеля
+
+permissions:
+  contents: write              # только WITNESS_LOG.md (минимум прав, §1.2 secure-use)
+
+concurrency:
+  group: witness
+  cancel-in-progress: false    # свидетели не сбивают друг друга
+
+jobs:
+  witness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5         # замер + API-вызов — меньше минуты, запас на медленный раннер
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: замер свидетеля + запись факта
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 witness.py --witness
+      - name: целость сот свидетеля (иммунитет)
+        run: python3 witness.py --verify
+      - name: целость сот сердца (свидетель не ломает то, что наблюдает)
+        run: python3 factum.py --verify
+      - name: зафиксировать соты свидетеля (правило 4 — push → rebase до 3 попыток)
+        run: |
+          git config user.name "factum[bot]"
+          git config user.email "factum[bot]@users.noreply.github.com"
+          git add WITNESS_LOG.md
+          if git diff --cached --quiet; then
+            echo "no changes"
+          else
+            git commit -m "witness: свидетель $(date -u +%Y-%m-%dT%H:%M:%SZ) · REVE=РЕВО"
+            ok=""
+            for i in 1 2 3; do
+              if git push origin HEAD:main; then ok=1; break; fi
+              git fetch origin main
+              git pull --rebase=merges origin main || git pull --rebase origin main
+            done
+            [ -n "$ok" ] || { echo "push не прошёл за 3 попытки (правило 4)"; exit 1; }
+          fi
