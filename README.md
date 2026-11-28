@@ -19,8 +19,20 @@
 
 | ФАЙЛОВ | ПАПОК | КОММИТОВ | ОБНОВЛЕНО | РЕЛИЗОВ |
 |---:|---:|---:|---|---:|
-| 56 | 3 | 1 | 2026-11-28 | 0 |
+| 59 | 3 | 1 | 2026-11-28 | 0 |
 <!--ФОРЖ:ПАСПОРТ:КОНЕЦ-->
+
+# factum
+
+<div align="center">
+
+<a href="https://github.com/rtynbirf/factum"><img src="banner.png" width="100%" alt="factum — штандарт мастерской в каноне ORNAMENTAL MYTHO-REALISM"></a>
+
+</div>
+
+
+
+
 
 # ФАКТУМ (FACTUM) v1.1
 
