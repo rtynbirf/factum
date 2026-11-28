@@ -1,4 +1,30 @@
+<div align="center">
+
+<a href="https://github.com/rtynbirf/factum"><img src="banner.png" width="100%" alt="factum — штандарт мастерской в каноне ORNAMENTAL MYTHO-REALISM"></a>
+
+</div>
+
+<!--ФОРЖ:МУЗА:НАЧАЛО-->
+<div align="center">
+  <img src="https://cdn.jsdelivr.net/gh/rtynbirf/factum@main/repo-muse.svg" width="100%" alt="Муза factum: мастерская КУЗНЯ ПОЛИМАТ, кузня ПОЛИМАТ, раунд 12 · REVE=РЕВО" />
+  <br/>
+  <img src="https://cdn.jsdelivr.net/gh/rtynbirf/factum@main/forge-divider.svg" width="62%" alt="делитель мастерской КУЗНЯ ПОЛИМАТ" />
+</div>
+<!--ФОРЖ:МУЗА:КОНЕЦ-->
+
+<!--ФОРЖ:ПАСПОРТ:НАЧАЛО-->
+<div align="center">
+  <img src="revo-page.svg" width="100%" alt="РЕВО-паспорт страницы factum в каноне ORNAMENTAL MYTHO-REALISM: орнаментальная решётка, медальон-миф, строение файлов, лексикон — по фактическому контенту" />
+</div>
+
+| ФАЙЛОВ | ПАПОК | КОММИТОВ | ОБНОВЛЕНО | РЕЛИЗОВ |
+|---:|---:|---:|---|---:|
+| 56 | 3 | 1 | 2026-11-28 | 0 |
+<!--ФОРЖ:ПАСПОРТ:КОНЕЦ-->
+
 # ФАКТУМ (FACTUM) v1.1
+
+<p align="center"><img src="https://cdn.jsdelivr.net/gh/rtynbirf/factum@main/.github/social-preview.png" alt="factum" width="100%"></p>
 
 > Сердце улья: автомат, который ДЕЛАЕТ факты. **Факт = байты** (Закон #2).
 
@@ -145,3 +171,5 @@ POET (Lehman–Stanley 2019), Tierra (Ray 1992).
 - **Соты**: append-only журнал; каждая ячейка — факт; подмену видно по хеш-цепочке (sha256[:12]).
 - **Свидетель**: независимый наблюдатель; правило 23 рекурсивно — у свидетеля пульса есть свидетель свидетеля.
 - **Апейрон**: приток случайных термов — неисчерпаемый резервуар, из которого отбор берёт сырьё.
+
+<!--ФОРЖ:ПОДВАЛ-->
